@@ -18,63 +18,32 @@ contract BetHouseInvariantTest is StdInvariant, Test {
     address public player = makeAddr("player");
 
     function setUp() public {
-        // Deploy PDT
         pdt = new PoolToken("Pool Deposit Token", "PDT");
-        
-        // Deploy Wrapped Token
         wrappedToken = new PoolToken("Wrapped Token", "WTOKEN");
         
-        // Deploy Pool
         pool = new Pool(address(wrappedToken), address(pdt));
-        
-        // Set Pool as owner of wrapped token
         wrappedToken.transferOwnership(address(pool));
         
-        // Deploy BetHouse
         betHouse = new BetHouse(address(pool));
 
-        // Give player initial PDT
+        // Правильное количество PDT
         pdt.mint(player, 5);
 
-        // Create Handler
         handler = new BetHouseHandler(betHouse, pool, wrappedToken, pdt, player);
 
-        // Target the handler for invariant testing
         targetContract(address(handler));
 
-        // Give player some ETH
         vm.deal(player, 10 ether);
     }
 
-    // ================== INVARIANT TESTS ==================
+    function invariant_WrappedSupplyConsistent() public { handler.invariant_WrappedSupplyConsistent(); }
+    function invariant_BettorHasEnoughTokens() public { handler.invariant_BettorHasEnoughTokens(); }
+    function invariant_BalanceLETotalSupply() public { handler.invariant_BalanceLETotalSupply(); }
+    function invariant_PoolOwnsWrappedToken() public { handler.invariant_PoolOwnsWrappedToken(); }
+    function invariant_NoNegativeValues() public { handler.invariant_NoNegativeValues(); }
+    function invariant_GettersDontRevert() public { handler.invariant_GettersDontRevert(); }
 
-    function invariant_WrappedSupplyConsistent() public {
-        handler.invariant_WrappedSupplyConsistent();
-    }
-
-    function invariant_BettorHasEnoughTokens() public {
-        handler.invariant_BettorHasEnoughTokens();
-    }
-
-    function invariant_BalanceLETotalSupply() public {
-        handler.invariant_BalanceLETotalSupply();
-    }
-
-    function invariant_PoolOwnsWrappedToken() public {
-        handler.invariant_PoolOwnsWrappedToken();
-    }
-
-    function invariant_NoNegativeValues() public {
-        handler.invariant_NoNegativeValues();
-    }
-
-    function invariant_GettersDontRevert() public {
-        handler.invariant_GettersDontRevert();
-    }
-
-    // Run with more runs for better coverage
     function testInvariant() public {
-        // You can run this to see stats
         handler.logStats();
     }
 }

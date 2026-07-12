@@ -27,10 +27,8 @@ contract BetHouseHandler is Test {
         player = _player;
     }
 
-    // ================== PUBLIC FUNCTIONS FOR FUZZING ==================
-
     function deposit(uint256 pdtAmount) public {
-        pdtAmount = bound(pdtAmount, 0, 500 ether);
+        pdtAmount = bound(pdtAmount, 0, 100); // маленькие значения, как в уровне
 
         vm.startPrank(player);
         pdt.approve(address(pool), pdtAmount);
@@ -67,7 +65,6 @@ contract BetHouseHandler is Test {
 
     // ================== INVARIANTS ==================
 
-    /// @notice Wrapped supply cannot exceed deposited assets
     function invariant_WrappedSupplyConsistent() public view {
         uint256 totalSupply = wrappedToken.totalSupply();
         uint256 pdtInPool = pdt.balanceOf(address(pool));
@@ -77,7 +74,6 @@ contract BetHouseHandler is Test {
         assertLe(totalSupply, maxExpected, "Wrapped supply > deposited assets");
     }
 
-    /// @notice Bettor must have at least 20 wrapped tokens
     function invariant_BettorHasEnoughTokens() public view {
         if (betHouse.isBettor(player)) {
             uint256 balance = pool.balanceOf(player);
@@ -85,25 +81,21 @@ contract BetHouseHandler is Test {
         }
     }
 
-    /// @notice User balance cannot exceed total supply
     function invariant_BalanceLETotalSupply() public view {
         uint256 userBalance = pool.balanceOf(player);
         uint256 totalSupply = wrappedToken.totalSupply();
         assertLe(userBalance, totalSupply);
     }
 
-    /// @notice Pool is owner of wrapped token
     function invariant_PoolOwnsWrappedToken() public view {
         assertEq(wrappedToken.owner(), address(pool));
     }
 
-    /// @notice No negative balances or supply
     function invariant_NoNegativeValues() public view {
         assertGe(wrappedToken.totalSupply(), 0);
         assertGe(pool.balanceOf(player), 0);
     }
 
-    /// @notice Getters should not revert
     function invariant_GettersDontRevert() public view {
         pool.depositsLocked(player);
         pool.balanceOf(player);
@@ -111,7 +103,6 @@ contract BetHouseHandler is Test {
         wrappedToken.balanceOf(player);
     }
 
-    // Helper to see stats
     function logStats() public view {
         console.log("=== Handler Stats ===");
         console.log("Deposits called:", timesDepositCalled);
